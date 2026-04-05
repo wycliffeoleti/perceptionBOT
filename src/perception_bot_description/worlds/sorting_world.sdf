@@ -1,0 +1,197 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="sorting_world">
+
+    <!-- Physics -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- Plugins -->
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics"/>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands"/>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin
+      filename="gz-sim-contact-system"
+      name="gz::sim::systems::Contact"/>
+
+    <!-- Lighting -->
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Ground plane -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+          <material>
+            <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.4 0.4 0.4 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Sorting bins (3x bins along the far edge of the table) -->
+
+    <!-- Red bin -->
+    <model name="bin_red">
+      <static>true</static>
+      <pose>0.65 -0.25 0.81 0 0 0</pose>
+      <link name="link">
+        <collision name="back"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 0.085 0.04 0 0 0</pose></collision>
+        <collision name="front"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 -0.085 0.04 0 0 0</pose></collision>
+        <collision name="left"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>-0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="right"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="bottom"><geometry><box><size>0.18 0.18 0.01</size></box></geometry>
+          <pose>0 0 0 0 0 0</pose></collision>
+        <visual name="visual">
+          <geometry><box><size>0.18 0.18 0.08</size></box></geometry>
+          <pose>0 0 0.04 0 0 0</pose>
+          <material><ambient>0.8 0.1 0.1 0.5</ambient><diffuse>0.8 0.1 0.1 0.5</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Blue bin -->
+    <model name="bin_blue">
+      <static>true</static>
+      <pose>0.65 0 0.81 0 0 0</pose>
+      <link name="link">
+        <collision name="back"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 0.085 0.04 0 0 0</pose></collision>
+        <collision name="front"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 -0.085 0.04 0 0 0</pose></collision>
+        <collision name="left"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>-0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="right"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="bottom"><geometry><box><size>0.18 0.18 0.01</size></box></geometry>
+          <pose>0 0 0 0 0 0</pose></collision>
+        <visual name="visual">
+          <geometry><box><size>0.18 0.18 0.08</size></box></geometry>
+          <pose>0 0 0.04 0 0 0</pose>
+          <material><ambient>0.1 0.1 0.8 0.5</ambient><diffuse>0.1 0.1 0.8 0.5</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Green bin -->
+    <model name="bin_green">
+      <static>true</static>
+      <pose>0.65 0.25 0.81 0 0 0</pose>
+      <link name="link">
+        <collision name="back"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 0.085 0.04 0 0 0</pose></collision>
+        <collision name="front"><geometry><box><size>0.18 0.01 0.08</size></box></geometry>
+          <pose>0 -0.085 0.04 0 0 0</pose></collision>
+        <collision name="left"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>-0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="right"><geometry><box><size>0.01 0.18 0.08</size></box></geometry>
+          <pose>0.085 0 0.04 0 0 0</pose></collision>
+        <collision name="bottom"><geometry><box><size>0.18 0.18 0.01</size></box></geometry>
+          <pose>0 0 0 0 0 0</pose></collision>
+        <visual name="visual">
+          <geometry><box><size>0.18 0.18 0.08</size></box></geometry>
+          <pose>0 0 0.04 0 0 0</pose>
+          <material><ambient>0.1 0.7 0.1 0.5</ambient><diffuse>0.1 0.7 0.1 0.5</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Object models — spawned dynamically via scripts/spawn_objects.py -->
+    <!-- Keeping a few static for initial testing -->
+
+    <!-- Red cube (test object) -->
+    <model name="red_cube_0">
+      <pose>0.35 -0.15 0.835 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.1</mass>
+          <inertia><ixx>1.67e-5</ixx><ixy>0</ixy><ixz>0</ixz>
+                   <iyy>1.67e-5</iyy><iyz>0</iyz><izz>1.67e-5</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>0.05 0.05 0.05</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.05 0.05 0.05</size></box></geometry>
+          <material>
+            <ambient>0.9 0.1 0.1 1</ambient>
+            <diffuse>0.9 0.1 0.1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Blue cube (test object) -->
+    <model name="blue_cube_0">
+      <pose>0.35 0.1 0.835 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.1</mass>
+          <inertia><ixx>1.67e-5</ixx><ixy>0</ixy><ixz>0</ixz>
+                   <iyy>1.67e-5</iyy><iyz>0</iyz><izz>1.67e-5</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>0.05 0.05 0.05</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.05 0.05 0.05</size></box></geometry>
+          <material>
+            <ambient>0.1 0.1 0.9 1</ambient>
+            <diffuse>0.1 0.1 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Green cylinder (test object) -->
+    <model name="green_cylinder_0">
+      <pose>0.4 -0.05 0.845 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.08</mass>
+          <inertia><ixx>2.5e-5</ixx><ixy>0</ixy><ixz>0</ixz>
+                   <iyy>2.5e-5</iyy><iyz>0</iyz><izz>1.25e-5</izz></inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><cylinder><radius>0.025</radius><length>0.07</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.025</radius><length>0.07</length></cylinder></geometry>
+          <material>
+            <ambient>0.1 0.7 0.1 1</ambient>
+            <diffuse>0.1 0.7 0.1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
