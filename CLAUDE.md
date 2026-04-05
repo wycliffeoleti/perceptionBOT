@@ -12,12 +12,18 @@ YOLOv11n + Depth Anything V2 ViT-S → 6DoF pose → MoveIt 2 Task Constructor p
 - C++17 throughout
 
 ## Workspace
-```
+```bash
+# Always source in this order (workspace install overrides ROS2 system):
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 colcon build --symlink-install
 colcon test
 ```
+
+> Note: `src/franka_description` is a git submodule. Clone with:
+> `git clone --recurse-submodules <repo>`
+> The submodule has its own build/install dirs (from upstream) — ignore them.
+> Always source from our workspace `install/` not from within the submodule.
 
 ## Package Map
 - `perception_bot_msgs`       — custom msg/srv/action interfaces

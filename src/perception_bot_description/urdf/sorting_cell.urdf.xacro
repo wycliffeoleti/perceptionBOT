@@ -4,12 +4,22 @@
   <!-- FR3 arm mounted on the table -->
   <xacro:include filename="$(find franka_description)/robots/fr3/fr3.urdf.xacro"/>
 
-  <!-- Args forwarded to franka xacro -->
+  <!-- Args forwarded to franka xacro.
+       We pass gazebo:=false to avoid the upstream franka_gazebo_bringup dependency.
+       gz_ros2_control plugin is injected manually below with our own controllers config. -->
   <xacro:arg name="hand"             default="true"/>
-  <xacro:arg name="gazebo"           default="true"/>
+  <xacro:arg name="gazebo"           default="false"/>
   <xacro:arg name="gazebo_effort"    default="false"/>
   <xacro:arg name="ros2_control"     default="true"/>
   <xacro:arg name="use_fake_hardware" default="false"/>
+
+  <!-- Inject gz_ros2_control plugin pointing to our controllers config -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find perception_bot_description)/config/fr3_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
 
   <!-- World link (Gazebo requires a world/base link) -->
   <link name="world"/>
