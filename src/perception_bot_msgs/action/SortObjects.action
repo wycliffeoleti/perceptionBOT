@@ -1,0 +1,15 @@
+# Goal: trigger the sorting pipeline
+bool use_estimated_depth  # true = Depth Anything V2, false = Gazebo depth
+int32 max_objects         # 0 = sort all detected objects
+---
+# Result
+uint32 objects_sorted
+uint32 objects_failed
+string[] failure_reasons
+float64 total_time_seconds
+---
+# Feedback
+uint32 current_object_index
+uint32 total_objects
+string current_action       # e.g. "picking", "placing", "planning"
+string current_object_class

@@ -1,0 +1,34 @@
+# ROS2 / colcon build artifacts
+build/
+install/
+log/
+
+# ONNX models (downloaded at runtime via scripts/download_models.py)
+src/perception_bot_perception/models/*.onnx
+src/perception_bot_perception/models/*.pt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+
+# OS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+
+# Datasets and recordings
+data/
+recordings/
+*.bag
+*.db3
+*.mcap
+
+# Docker secrets
+.env.local
