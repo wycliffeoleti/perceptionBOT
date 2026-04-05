@@ -74,6 +74,8 @@ def generate_launch_description():
     )
 
     # ros_gz_bridge: clock + camera topics
+    # In Gazebo Harmonic, the rgb camera publishes gz.msgs.Image on /camera/image_raw
+    # The rgbd camera publishes gz.msgs.Image on /camera/depth/image
     gz_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -81,8 +83,9 @@ def generate_launch_description():
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
-            "/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
-            "/camera/depth@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/image_raw/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/camera/depth/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/depth/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
         ],
         output="screen",
     )

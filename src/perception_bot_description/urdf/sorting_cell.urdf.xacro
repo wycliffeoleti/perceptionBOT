@@ -52,12 +52,18 @@
     <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
   </joint>
 
-  <!-- Gazebo camera sensor plugins -->
+  <!--
+    Gazebo Harmonic sensor definition (gz-sim 8).
+    gz-sim-sensors-system at the WORLD level handles all sensors — no per-sensor plugin.
+    Topic fields publish directly to Gazebo transport topics.
+    ros_gz_bridge in the launch file bridges them to ROS2.
+  -->
   <gazebo reference="camera_link">
     <sensor name="rgb_camera" type="camera">
-      <always_on>true</always_on>
+      <always_on>1</always_on>
       <update_rate>30</update_rate>
-      <camera>
+      <topic>/camera/image_raw</topic>
+      <camera name="rgb_camera">
         <horizontal_fov>1.047</horizontal_fov>
         <image>
           <width>640</width>
@@ -66,22 +72,13 @@
         </image>
         <clip><near>0.05</near><far>10.0</far></clip>
       </camera>
-      <plugin
-        filename="gz-sim-ros-camera-system"
-        name="gz::sim::systems::Camera">
-        <camera_name>camera</camera_name>
-        <frame_name>camera_optical_frame</frame_name>
-        <ros>
-          <remapping>~/image_raw:=/camera/image_raw</remapping>
-          <remapping>~/camera_info:=/camera/camera_info</remapping>
-        </ros>
-      </plugin>
     </sensor>
 
-    <sensor name="depth_camera" type="depth_camera">
-      <always_on>true</always_on>
+    <sensor name="depth_camera" type="rgbd_camera">
+      <always_on>1</always_on>
       <update_rate>15</update_rate>
-      <camera>
+      <topic>/camera/depth</topic>
+      <camera name="depth_camera">
         <horizontal_fov>1.047</horizontal_fov>
         <image>
           <width>640</width>
@@ -89,16 +86,6 @@
         </image>
         <clip><near>0.05</near><far>10.0</far></clip>
       </camera>
-      <plugin
-        filename="gz-sim-ros-depth-camera-system"
-        name="gz::sim::systems::DepthCamera">
-        <camera_name>depth_camera</camera_name>
-        <frame_name>camera_optical_frame</frame_name>
-        <ros>
-          <remapping>~/image_raw:=/camera/depth</remapping>
-          <remapping>~/points:=/camera/points</remapping>
-        </ros>
-      </plugin>
     </sensor>
   </gazebo>
 
