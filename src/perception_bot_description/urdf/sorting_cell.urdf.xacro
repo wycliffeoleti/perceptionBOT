@@ -1,60 +1,25 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="sorting_cell">
 
-  <!-- FR3 arm mounted on the table -->
+  <!--
+    FR3 arm at table height.
+    When gazebo:=true, fr3.urdf.xacro creates:
+      - <link name="world"/>
+      - <joint name="world_joint"> connecting world -> fr3_link0 at xyz offset
+    We pass xyz:="0 0 0.81" (table height) so the arm base is at the table surface.
+    Table, bins, and objects are defined in the SDF world — not repeated here.
+  -->
   <xacro:include filename="$(find franka_description)/robots/fr3/fr3.urdf.xacro"/>
 
-  <!-- Args forwarded to franka xacro.
-       We pass gazebo:=false to avoid the upstream franka_gazebo_bringup dependency.
-       gz_ros2_control plugin is injected manually below with our own controllers config. -->
+  <!-- Args forwarded to franka xacro -->
   <xacro:arg name="hand"             default="true"/>
-  <xacro:arg name="gazebo"           default="false"/>
+  <xacro:arg name="gazebo"           default="true"/>
+  <xacro:arg name="xyz"              default="0 0 0.81"/>
   <xacro:arg name="gazebo_effort"    default="false"/>
   <xacro:arg name="ros2_control"     default="true"/>
   <xacro:arg name="use_fake_hardware" default="false"/>
 
-  <!-- Inject gz_ros2_control plugin pointing to our controllers config -->
-  <gazebo>
-    <plugin filename="gz_ros2_control-system"
-            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>$(find perception_bot_description)/config/fr3_controllers.yaml</parameters>
-    </plugin>
-  </gazebo>
-
-  <!-- World link (Gazebo requires a world/base link) -->
-  <link name="world"/>
-
-  <joint name="world_to_base" type="fixed">
-    <parent link="world"/>
-    <child  link="fr3_link0"/>
-    <origin xyz="0 0 0.81" rpy="0 0 0"/>
-    <!-- 0.81m = table height: arm base sits on the table surface -->
-  </joint>
-
-  <!-- Table -->
-  <link name="table">
-    <visual>
-      <geometry><box size="1.2 0.8 0.81"/></geometry>
-      <material name="table_wood">
-        <color rgba="0.72 0.55 0.38 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry><box size="1.2 0.8 0.81"/></geometry>
-    </collision>
-    <inertial>
-      <mass value="40.0"/>
-      <inertia ixx="10.0" ixy="0" ixz="0" iyy="10.0" iyz="0" izz="10.0"/>
-    </inertial>
-  </link>
-
-  <joint name="world_to_table" type="fixed">
-    <parent link="world"/>
-    <child  link="table"/>
-    <origin xyz="0.4 0 0.405" rpy="0 0 0"/>
-  </joint>
-
-  <!-- Eye-to-hand camera above the workspace -->
+  <!-- Eye-to-hand camera — fixed to the world frame (created by franka xacro) -->
   <link name="camera_link">
     <visual>
       <geometry><box size="0.05 0.09 0.025"/></geometry>
@@ -74,11 +39,12 @@
   <joint name="world_to_camera" type="fixed">
     <parent link="world"/>
     <child  link="camera_link"/>
-    <!-- 1.5m above table surface, angled 45° downward, looking at workspace center -->
-    <origin xyz="-0.2 0 1.5" rpy="0 0.785 0"/>
+    <!-- 0.69m above world origin = 1.5m above ground (0.81m table + 0.69m stand) -->
+    <!-- Angled 45° downward toward workspace center at (0.35, 0, 0.81) -->
+    <origin xyz="-0.2 0 0.69" rpy="0 0.785 0"/>
   </joint>
 
-  <!-- Camera optical frame (z-forward, x-right, y-down) -->
+  <!-- Camera optical frame (z-forward, x-right, y-down for image_geometry compatibility) -->
   <link name="camera_optical_frame"/>
   <joint name="camera_to_optical" type="fixed">
     <parent link="camera_link"/>
@@ -86,7 +52,7 @@
     <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
   </joint>
 
-  <!-- Gazebo camera sensor plugin -->
+  <!-- Gazebo camera sensor plugins -->
   <gazebo reference="camera_link">
     <sensor name="rgb_camera" type="camera">
       <always_on>true</always_on>
@@ -102,7 +68,7 @@
       </camera>
       <plugin
         filename="gz-sim-ros-camera-system"
-        name="gz_ros2_control::CameraPlugin">
+        name="gz::sim::systems::Camera">
         <camera_name>camera</camera_name>
         <frame_name>camera_optical_frame</frame_name>
         <ros>
@@ -112,7 +78,6 @@
       </plugin>
     </sensor>
 
-    <!-- Depth camera (Gazebo ground truth depth) -->
     <sensor name="depth_camera" type="depth_camera">
       <always_on>true</always_on>
       <update_rate>15</update_rate>
@@ -126,7 +91,7 @@
       </camera>
       <plugin
         filename="gz-sim-ros-depth-camera-system"
-        name="gz_ros2_control::DepthCameraPlugin">
+        name="gz::sim::systems::DepthCamera">
         <camera_name>depth_camera</camera_name>
         <frame_name>camera_optical_frame</frame_name>
         <ros>
