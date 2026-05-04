@@ -53,6 +53,24 @@
       </link>
     </model>
 
+    <!-- Table — 1.0 × 0.6 m surface at 0.81 m height -->
+    <model name="table">
+      <static>true</static>
+      <pose>0.4 0 0.405 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.0 0.6 0.81</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 0.6 0.81</size></box></geometry>
+          <material>
+            <ambient>0.7 0.55 0.4 1</ambient>
+            <diffuse>0.7 0.55 0.4 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
     <!-- Sorting bins (3x bins along the far edge of the table) -->
 
     <!-- Red bin -->

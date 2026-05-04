@@ -125,6 +125,16 @@ def generate_launch_description():
         output="screen",
     )
 
+    gripper_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "fr3_gripper_controller",
+            "--controller-manager", "/controller_manager",
+        ],
+        output="screen",
+    )
+
     return LaunchDescription([
         set_gz_resource_path,
         set_gz_plugin_path,
@@ -144,6 +154,13 @@ def generate_launch_description():
             OnProcessExit(
                 target_action=joint_state_broadcaster_spawner,
                 on_exit=[arm_controller_spawner],
+            )
+        ),
+        # Spawn gripper controller after arm controller exits
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=arm_controller_spawner,
+                on_exit=[gripper_controller_spawner],
             )
         ),
     ])
