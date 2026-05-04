@@ -101,6 +101,17 @@ if(HAVE_ONNXRUNTIME)
 endif()
 install(TARGETS depth_node DESTINATION lib/${PROJECT_NAME})
 
+# --- pose_estimation_node (Phase 4) ---
+add_executable(pose_estimation_node src/pose_estimation_node.cpp)
+ament_target_dependencies(pose_estimation_node ${PERCEPTION_DEPS})
+target_include_directories(pose_estimation_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(pose_estimation_node ${OpenCV_LIBS})
+install(TARGETS pose_estimation_node DESTINATION lib/${PROJECT_NAME})
+
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
 install(DIRECTORY models/ DESTINATION share/${PROJECT_NAME}/models OPTIONAL)
