@@ -1,0 +1,10 @@
+.git
+.github
+build
+install
+log
+.demo_bag
+.demo.log
+*.pyc
+__pycache__
+src/perception_bot_perception/models/*.onnx
