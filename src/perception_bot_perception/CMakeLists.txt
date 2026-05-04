@@ -81,6 +81,26 @@ if(HAVE_ONNXRUNTIME)
 endif()
 install(TARGETS detection_node DESTINATION lib/${PROJECT_NAME})
 
+# --- depth_node (Phase 3) ---
+set(DEPTH_SRCS src/depth_node.cpp)
+if(HAVE_ONNXRUNTIME)
+  list(APPEND DEPTH_SRCS src/depth_anything.cpp)
+endif()
+add_executable(depth_node ${DEPTH_SRCS})
+ament_target_dependencies(depth_node ${PERCEPTION_DEPS})
+target_include_directories(depth_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(depth_node ${OpenCV_LIBS})
+if(HAVE_ONNXRUNTIME)
+  target_compile_definitions(depth_node PRIVATE USE_ONNXRUNTIME)
+  target_include_directories(depth_node PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
+  target_link_libraries(depth_node ${ONNXRUNTIME_LIB})
+endif()
+install(TARGETS depth_node DESTINATION lib/${PROJECT_NAME})
+
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
 install(DIRECTORY models/ DESTINATION share/${PROJECT_NAME}/models OPTIONAL)
