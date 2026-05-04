@@ -4,9 +4,11 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     IncludeLaunchDescription,
+    RegisterEventHandler,
     SetEnvironmentVariable,
     TimerAction,
 )
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 import xacro
@@ -39,6 +41,14 @@ def generate_launch_description():
     set_gz_resource_path = SetEnvironmentVariable(
         name="GZ_SIM_RESOURCE_PATH",
         value=franka_desc_parent,
+    )
+
+    # Required on binary Jazzy installs: gz_ros2_control GazeboSimSystem plugin
+    # is installed to /opt/ros/jazzy/lib/ but GZ_SIM_SYSTEM_PLUGIN_PATH may not
+    # include it, causing "Could not find GazeboSimSystem" at runtime.
+    set_gz_plugin_path = SetEnvironmentVariable(
+        name="GZ_SIM_SYSTEM_PLUGIN_PATH",
+        value="/opt/ros/jazzy/lib/",
     )
 
     # Launch Gazebo Harmonic with the sorting world
@@ -74,60 +84,66 @@ def generate_launch_description():
     )
 
     # ros_gz_bridge: clock + camera topics
-    # In Gazebo Harmonic, the rgb camera publishes gz.msgs.Image on /camera/image_raw
-    # The rgbd camera publishes gz.msgs.Image on /camera/depth/image
+    # Camera topic mapping for Gazebo Harmonic:
+    # rgb sensor  <topic>camera</topic>  → /camera/image, /camera/camera_info
+    # rgbd sensor <topic>camera</topic>  → /camera/image, /camera/camera_info,
+    #                                      /camera/depth_image, /camera/points
     gz_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
         name="gz_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
-            "/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
-            "/camera/image_raw/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
-            "/camera/depth/image@sensor_msgs/msg/Image[gz.msgs.Image",
-            "/camera/depth/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
         ],
         output="screen",
     )
 
-    # Controller spawners — wait for controller_manager (created by Gazebo plugin)
-    # 10s delay gives Gazebo time to start and create the controller_manager
-    joint_state_broadcaster_spawner = TimerAction(
-        period=10.0,
-        actions=[
-            Node(
-                package="controller_manager",
-                executable="spawner",
-                arguments=[
-                    "joint_state_broadcaster",
-                    "--controller-manager", "/controller_manager",
-                ],
-                output="screen",
-            )
+    # joint_state_broadcaster spawns after RSP exits (RSP publishes immediately)
+    # fr3_arm_controller spawns after joint_state_broadcaster exits
+    # This is more robust than TimerAction — no hardcoded delays.
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "joint_state_broadcaster",
+            "--controller-manager", "/controller_manager",
         ],
+        output="screen",
     )
 
-    arm_controller_spawner = TimerAction(
-        period=13.0,
-        actions=[
-            Node(
-                package="controller_manager",
-                executable="spawner",
-                arguments=[
-                    "fr3_arm_controller",
-                    "--controller-manager", "/controller_manager",
-                ],
-                output="screen",
-            )
+    arm_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "fr3_arm_controller",
+            "--controller-manager", "/controller_manager",
         ],
+        output="screen",
     )
 
     return LaunchDescription([
         set_gz_resource_path,
+        set_gz_plugin_path,
         gz_sim,
         robot_state_publisher,
         gz_bridge,
         TimerAction(period=3.0, actions=[spawn_robot]),
-        joint_state_broadcaster_spawner,
-        arm_controller_spawner,
+        # Spawn joint_state_broadcaster after spawn_robot exits (robot is in Gazebo)
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=spawn_robot,
+                on_exit=[joint_state_broadcaster_spawner],
+            )
+        ),
+        # Spawn arm controller after joint_state_broadcaster exits
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=joint_state_broadcaster_spawner,
+                on_exit=[arm_controller_spawner],
+            )
+        ),
     ])
