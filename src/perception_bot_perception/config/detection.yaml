@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    backend: hsv              # "hsv" (default) or "yolo"
+    image_topic: /camera/image
+    output_topic: /perception/detections
+
+    # HSV backend
+    min_area_px: 200
+
+    # YOLO backend (only used when backend == "yolo")
+    model_path: ""            # absolute path to yolov11n.onnx
+    use_cuda: true
+    conf_threshold: 0.25
+    iou_threshold: 0.45

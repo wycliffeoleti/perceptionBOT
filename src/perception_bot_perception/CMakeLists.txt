@@ -22,14 +22,26 @@ find_package(image_geometry REQUIRED)
 find_package(perception_bot_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# ONNX Runtime — expects ONNXRUNTIME_ROOT to be set, e.g.:
-#   cmake -DONNXRUNTIME_ROOT=/opt/onnxruntime ...
-# or set via CMAKE_PREFIX_PATH
+# ONNX Runtime — optional. Pre-built tarball typically extracted at /opt/onnxruntime.
+# When found, USE_ONNXRUNTIME is defined and the YOLOv11 / DepthAnything paths build.
 find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
-  HINTS ${ONNXRUNTIME_ROOT}/include/onnxruntime/core/session
+  HINTS ${ONNXRUNTIME_ROOT}/include
+        ${ONNXRUNTIME_ROOT}/include/onnxruntime
+        ${ONNXRUNTIME_ROOT}/include/onnxruntime/core/session
+        /opt/onnxruntime/include
+        /opt/onnxruntime/include/onnxruntime
         /opt/onnxruntime/include/onnxruntime/core/session)
 find_library(ONNXRUNTIME_LIB onnxruntime
   HINTS ${ONNXRUNTIME_ROOT}/lib /opt/onnxruntime/lib)
+
+if(ONNXRUNTIME_INCLUDE_DIR AND ONNXRUNTIME_LIB)
+  set(HAVE_ONNXRUNTIME TRUE)
+  message(STATUS "ONNX Runtime found: ${ONNXRUNTIME_LIB}")
+else()
+  set(HAVE_ONNXRUNTIME FALSE)
+  message(WARNING "ONNX Runtime not found — YOLOv11 / DepthAnything paths will be disabled. "
+                  "Install with scripts/install_onnxruntime.sh and rebuild.")
+endif()
 
 set(PERCEPTION_DEPS
   rclcpp
@@ -46,34 +58,52 @@ set(PERCEPTION_DEPS
 )
 
 # --- detection_node (Phase 2) ---
-# add_executable(detection_node
-#   src/detection_node.cpp
-#   src/yolo_detector.cpp
-#   src/onnx_utils.cpp
-# )
-# ament_target_dependencies(detection_node ${PERCEPTION_DEPS})
-# target_include_directories(detection_node PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   ${ONNXRUNTIME_INCLUDE_DIR}
-#   ${OpenCV_INCLUDE_DIRS}
-# )
-# target_link_libraries(detection_node ${ONNXRUNTIME_LIB} ${OpenCV_LIBS})
-# install(TARGETS detection_node DESTINATION lib/${PROJECT_NAME})
+set(DETECTION_SRCS
+  src/detection_node.cpp
+  src/hsv_detector.cpp
+)
+if(HAVE_ONNXRUNTIME)
+  list(APPEND DETECTION_SRCS src/yolo_v11.cpp)
+endif()
 
-# --- depth_node (Phase 3) ---
-# add_executable(depth_node ...)
-
-# --- pose_estimation_node (Phase 4) ---
-# add_executable(pose_estimation_node ...)
+add_executable(detection_node ${DETECTION_SRCS})
+ament_target_dependencies(detection_node ${PERCEPTION_DEPS})
+target_include_directories(detection_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(detection_node ${OpenCV_LIBS})
+if(HAVE_ONNXRUNTIME)
+  target_compile_definitions(detection_node PRIVATE USE_ONNXRUNTIME)
+  target_include_directories(detection_node PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
+  target_link_libraries(detection_node ${ONNXRUNTIME_LIB})
+endif()
+install(TARGETS detection_node DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
+install(DIRECTORY models/ DESTINATION share/${PROJECT_NAME}/models OPTIONAL)
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
+  # Run only the lightweight linters — cpplint/uncrustify enforce Google/ROS2
+  # style which doesn't match this codebase's brace placement.
   find_package(ament_cmake_gtest REQUIRED)
-  set(ament_cmake_copyright_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_xmllint QUIET)
+  find_package(ament_cmake_lint_cmake QUIET)
+  if(ament_cmake_xmllint_FOUND)
+    ament_xmllint()
+  endif()
+  if(ament_cmake_lint_cmake_FOUND)
+    ament_lint_cmake()
+  endif()
+
+  ament_add_gtest(test_hsv_detector test/test_hsv_detector.cpp src/hsv_detector.cpp)
+  target_include_directories(test_hsv_detector PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS})
+  target_link_libraries(test_hsv_detector ${OpenCV_LIBS})
+  ament_target_dependencies(test_hsv_detector
+    rclcpp std_msgs sensor_msgs geometry_msgs perception_bot_msgs)
 endif()
 
 ament_package()
